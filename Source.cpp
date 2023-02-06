@@ -5,7 +5,7 @@
 #define STRING_NULL " "
 
 #define READ 1
-#define WRITE 1
+#define WRITE 0
 
 class Serialization
 {
@@ -22,14 +22,14 @@ public:
 	~Serialization() = default;
 
 	/// <summary>
-	/// Serialize array of base data types, without string and pointers.
+	/// Serialize array of data.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	/// <param name="data"></param>
 	/// <param name="size"></param>
 	/// <param name="path"></param>
 	template<typename T>
-	void SerializeArrayOfBaseDataTypes(T* data, const int size, const std::string path)
+	void SerializeArrayOfData(T* data, const int size, const std::string path)
 	{
 		m_fout.open(path, std::ios::binary | std::ios::app | std::ios::out);
 
@@ -49,14 +49,14 @@ public:
 	}
 
 	/// <summary>
-	/// Deserialize array of base data types, without string and pointers.
+	/// Deserialize array of data.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	/// <param name="data"></param>
 	/// <param name="size"></param>
 	/// <param name="path"></param>
 	template<typename T>
-	void DeserializeArrayOfBaseDataTypes(T* data, const int size, const std::string path)
+	void DeserializeArrayOfData(T* data, const int size, const std::string path)
 	{
 		m_fin.open(path, std::ios::binary | std::ios::in);
 		m_fin.seekg(m_current_position, std::ios_base::beg);
@@ -76,14 +76,16 @@ public:
 		m_current_position = m_fin.tellg();
 		m_fin.close();
 	}
-
+	
 	/// <summary>
-	/// Serialize array of string.
+	/// Serialize array of data.
 	/// </summary>
+	/// <typeparam name="T"></typeparam>
 	/// <param name="data"></param>
 	/// <param name="size"></param>
 	/// <param name="path"></param>
-	void SerializeArrayOfString(std::string* data, const int size, const std::string path)
+	template<> // implementation for strings ----->
+	void SerializeArrayOfData<std::string>(std::string* data, const int size, const std::string path)
 	{
 		m_fout.open(path, std::ios::binary | std::ios::app | std::ios::out);
 
@@ -106,12 +108,14 @@ public:
 	}
 
 	/// <summary>
-	/// Deserialize array of string.
+	/// Deserialize array of data.
 	/// </summary>
+	/// <typeparam name="T"></typeparam>
 	/// <param name="data"></param>
 	/// <param name="size"></param>
 	/// <param name="path"></param>
-	void DeserializeArrayOfString(std::string* data, const int size, const std::string path)
+	template<> // implementation for strings ----->
+	void DeserializeArrayOfData<std::string>(std::string* data, const int size, const std::string path)
 	{
 		m_fin.open(path, std::ios::binary | std::ios::in);
 		m_fin.seekg(m_current_position, std::ios_base::beg);
@@ -141,13 +145,13 @@ public:
 	}
 
 	/// <summary>
-	/// Serialize one variable of the base data type.
+	/// Serialize one variable.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	/// <param name="data"></param>
 	/// <param name="path"></param>
 	template<typename T>
-	void SerializeBaseDataType(const T& data, const std::string path)
+	void SerializeData(const T& data, const std::string path)
 	{
 		m_fout.open(path, std::ios::binary | std::ios::app | std::ios::out);
 
@@ -162,15 +166,15 @@ public:
 
 		m_fout.close();
 	}
-
+	
 	/// <summary>
-	/// Deserialize one variable of the base data type.
+	/// Deserialize one variable.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	/// <param name="data"></param>
 	/// <param name="path"></param>
 	template<typename T>
-	void DeserializeBaseDataType(T& data, const std::string path)
+	void DeserializeData(T& data, const std::string path)
 	{
 		m_fin.open(path, std::ios::binary | std::ios::in);
 		m_fin.seekg(m_current_position, std::ios_base::beg);
@@ -189,11 +193,13 @@ public:
 	}
 
 	/// <summary>
-	/// Serialize one string.
+	/// Serialize one variable.
 	/// </summary>
+	/// <typeparam name="T"></typeparam>
 	/// <param name="data"></param>
 	/// <param name="path"></param>
-	void SerializeString(const std::string& data, const std::string path)
+	template<>
+	void SerializeData<std::string>(const std::string& data, const std::string path)
 	{
 		m_fout.open(path, std::ios::binary | std::ios::app | std::ios::out);
 
@@ -213,11 +219,13 @@ public:
 	}
 
 	/// <summary>
-	/// Deserialize one string.
+	/// Deserialize one variable.
 	/// </summary>
+	/// <typeparam name="T"></typeparam>
 	/// <param name="data"></param>
 	/// <param name="path"></param>
-	void DeserializeString(std::string& data, const std::string path)
+	template<>
+	void DeserializeData<std::string>(std::string& data, const std::string path)
 	{
 		m_fin.open(path, std::ios::binary | std::ios::in);
 		m_fin.seekg(m_current_position, std::ios_base::beg);
@@ -303,19 +311,19 @@ int main()
 		serialization.ClearFile(PATH);
 
 		int nums[SIZE] = { 1, 2, 3 };
-		serialization.SerializeArrayOfBaseDataTypes(nums, SIZE, PATH);
+		serialization.SerializeArrayOfData(nums, SIZE, PATH);
 
 		std::string strings[SIZE] = { "sssss", "dsfsdfsdfsd", "fsdfsdfksdriireirioreoireogdfgdfg" };
-		serialization.SerializeArrayOfString(strings, SIZE, PATH);
+		serialization.SerializeArrayOfData(strings, SIZE, PATH);
 
 		float fnums[SIZE] = { 1.2, 3.4, 7.7 };
-		serialization.SerializeArrayOfBaseDataTypes(fnums, SIZE, PATH);
+		serialization.SerializeArrayOfData(fnums, SIZE, PATH);
 
 		double x = 2.343545;
-		serialization.SerializeBaseDataType(x, PATH);
+		serialization.SerializeData(x, PATH);
 
 		std::string str = "hello world";
-		serialization.SerializeString(str, PATH);
+		serialization.SerializeData(str, PATH);
 	}
 	catch (const std::ofstream::failure& ex)
 	{
@@ -331,40 +339,40 @@ int main()
 	{
 		std::cout << "Something went wrong" << std::endl;
 	}
-
+	
 #endif
-
+	
 #if READ
 
 	try
 	{
 		int result_nums[SIZE] = { NULL };
-		serialization.DeserializeArrayOfBaseDataTypes(result_nums, SIZE, PATH);
+		serialization.DeserializeArrayOfData(result_nums, SIZE, PATH);
 		for (int i = 0; i < SIZE; i++)
 		{
 			std::cout << result_nums[i] << std::endl;
 		}
 
 		std::string result_strings[SIZE] = { STRING_NULL };
-		serialization.DeserializeArrayOfString(result_strings, SIZE, PATH);
+		serialization.DeserializeArrayOfData(result_strings, SIZE, PATH);
 		for (int i = 0; i < SIZE; i++)
 		{
 			std::cout << result_strings[i] << std::endl;
 		}
 
 		float result_fnums[SIZE] = { NULL };
-		serialization.DeserializeArrayOfBaseDataTypes(result_fnums, SIZE, PATH);
+		serialization.DeserializeArrayOfData(result_fnums, SIZE, PATH);
 		for (int i = 0; i < SIZE; i++)
 		{
 			std::cout << result_fnums[i] << std::endl;
 		}
 
 		double result_x = NULL;
-		serialization.DeserializeBaseDataType(result_x, PATH);
+		serialization.DeserializeData(result_x, PATH);
 		std::cout << result_x << std::endl;
 
 		std::string result_str = STRING_NULL;
-		serialization.DeserializeString(result_str, PATH);
+		serialization.DeserializeData(result_str, PATH);
 		std::cout << result_str << std::endl;
 
 		serialization.ResetFileReadPosition();

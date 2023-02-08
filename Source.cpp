@@ -1,11 +1,12 @@
 #include<iostream>
 #include<string>
+#include<string_view>
 #include<fstream>
 
 #define STRING_NULL " "
 
 #define READ 1
-#define WRITE 0
+#define WRITE 1
 
 class Serialization
 {
@@ -19,7 +20,7 @@ public:
 	
 	Serialization(const Serialization& other) = default;
 
-	~Serialization() = default;
+	virtual ~Serialization() = default;
 
 	/// <summary>
 	/// Serialize array of data.
@@ -29,21 +30,20 @@ public:
 	/// <param name="size"></param>
 	/// <param name="path"></param>
 	template<typename T>
-	void SerializeArrayOfData(T* data, const int size, const std::string path)
+	void SerializeArrayOfData(T* data, const int size,  std::string_view path)
 	{
-		m_fout.open(path, std::ios::binary | std::ios::app | std::ios::out);
+		m_fout.open(path.data(), std::ios::binary | std::ios::app | std::ios::out);
 
 		if (!m_fout.is_open())
 		{
 			throw std::exception("error opening the file");
 		}
-		else
+		
+		for (T* pArr = data; pArr < data + size; pArr++)
 		{
-			for (T* pArr = data; pArr < data + size; pArr++)
-			{
-				m_fout.write((char*)(pArr), sizeof(T));
-			}
+			m_fout.write(reinterpret_cast<const char*>(pArr), sizeof(T));
 		}
+
 
 		m_fout.close();
 	}
@@ -56,21 +56,19 @@ public:
 	/// <param name="size"></param>
 	/// <param name="path"></param>
 	template<typename T>
-	void DeserializeArrayOfData(T* data, const int size, const std::string path)
+	void DeserializeArrayOfData(T* data, const int size, std::string_view path)
 	{
-		m_fin.open(path, std::ios::binary | std::ios::in);
+		m_fin.open(path.data(), std::ios::binary | std::ios::in);
 		m_fin.seekg(m_current_position, std::ios_base::beg);
 
 		if (!m_fin.is_open())
 		{
 			throw std::exception("error opening the file");
 		}
-		else
+
+		for (T* pArr = data; pArr < data + size; pArr++)
 		{
-			for (T* pArr = data; pArr < data + size; pArr++)
-			{
-				m_fin.read((char*)(pArr), sizeof(T));
-			}
+			m_fin.read(reinterpret_cast<char*>(pArr), sizeof(T));
 		}
 
 		m_current_position = m_fin.tellg();
@@ -85,24 +83,23 @@ public:
 	/// <param name="size"></param>
 	/// <param name="path"></param>
 	template<> // implementation for strings ----->
-	void SerializeArrayOfData<std::string>(std::string* data, const int size, const std::string path)
+	void SerializeArrayOfData<std::string>(std::string* data, const int size, std::string_view path)
 	{
-		m_fout.open(path, std::ios::binary | std::ios::app | std::ios::out);
+		m_fout.open(path.data(), std::ios::binary | std::ios::app | std::ios::out);
 
 		if (!m_fout.is_open())
 		{
 			throw std::exception("error opening the file");
 		}
-		else
+
+		for (std::string* pArr = data; pArr < data + size; pArr++)
 		{
-			for (std::string* pArr = data; pArr < data + size; pArr++)
-			{
-				std::size_t data_lenght = (*pArr).length() + 1;
+			std::size_t data_lenght = (*pArr).length() + 1;
 				
-				m_fout.write((char*)&data_lenght, sizeof(data_lenght));
-				m_fout.write((char*)(*pArr).c_str(), data_lenght);
-			}
+			m_fout.write(reinterpret_cast<const char*>(&data_lenght), sizeof(data_lenght));
+			m_fout.write(reinterpret_cast<const char*>((*pArr).c_str()), data_lenght);
 		}
+
 
 		m_fout.close();
 	}
@@ -115,137 +112,125 @@ public:
 	/// <param name="size"></param>
 	/// <param name="path"></param>
 	template<> // implementation for strings ----->
-	void DeserializeArrayOfData<std::string>(std::string* data, const int size, const std::string path)
+	void DeserializeArrayOfData<std::string>(std::string* data, const int size, std::string_view path)
 	{
-		m_fin.open(path, std::ios::binary | std::ios::in);
+		m_fin.open(path.data(), std::ios::binary | std::ios::in);
 		m_fin.seekg(m_current_position, std::ios_base::beg);
 
 		if (!m_fin.is_open())
 		{
 			throw std::exception("error opening the file");
 		}
-		else
-		{
-			for (std::string* pArr = data; pArr < data + size; pArr++)
-			{
-				std::size_t data_lenght;
 
-				m_fin.read((char*)&data_lenght, sizeof(data_lenght));
-				char* buffer = new char[data_lenght];
-				m_fin.read(buffer, data_lenght);
-
-				*pArr = buffer;
-
-				delete[] buffer;
-			}
-		}
-
-		m_current_position = m_fin.tellg();
-		m_fin.close();
-	}
-
-	/// <summary>
-	/// Serialize one variable.
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	/// <param name="data"></param>
-	/// <param name="path"></param>
-	template<typename T>
-	void SerializeData(const T& data, const std::string path)
-	{
-		m_fout.open(path, std::ios::binary | std::ios::app | std::ios::out);
-
-		if (!m_fout.is_open())
-		{
-			throw std::exception("error opening the file");
-		}
-		else
-		{
-			m_fout.write((char*)&data, sizeof(T));
-		}
-
-		m_fout.close();
-	}
-	
-	/// <summary>
-	/// Deserialize one variable.
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	/// <param name="data"></param>
-	/// <param name="path"></param>
-	template<typename T>
-	void DeserializeData(T& data, const std::string path)
-	{
-		m_fin.open(path, std::ios::binary | std::ios::in);
-		m_fin.seekg(m_current_position, std::ios_base::beg);
-
-		if (!m_fin.is_open())
-		{
-			throw std::exception("error opening the file");
-		}
-		else
-		{
-			m_fin.read((char*)&data, sizeof(T));
-		}
-
-		m_current_position = m_fin.tellg();
-		m_fin.close();
-	}
-
-	/// <summary>
-	/// Serialize one variable.
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	/// <param name="data"></param>
-	/// <param name="path"></param>
-	template<>
-	void SerializeData<std::string>(const std::string& data, const std::string path)
-	{
-		m_fout.open(path, std::ios::binary | std::ios::app | std::ios::out);
-
-		if (!m_fout.is_open())
-		{
-			throw std::exception("error opening the file");
-		}
-		else
-		{
-			std::size_t data_lenght = data.length() + 1;
-
-			m_fout.write((char*)&data_lenght, sizeof(data_lenght));
-			m_fout.write((char*)data.c_str(), data_lenght);
-		}
-
-		m_fout.close();
-	}
-
-	/// <summary>
-	/// Deserialize one variable.
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	/// <param name="data"></param>
-	/// <param name="path"></param>
-	template<>
-	void DeserializeData<std::string>(std::string& data, const std::string path)
-	{
-		m_fin.open(path, std::ios::binary | std::ios::in);
-		m_fin.seekg(m_current_position, std::ios_base::beg);
-
-		if (!m_fin.is_open())
-		{
-			throw std::exception("error opening the file");
-		}
-		else
+		for (std::string* pArr = data; pArr < data + size; pArr++)
 		{
 			std::size_t data_lenght;
 
-			m_fin.read((char*)&data_lenght, sizeof(data_lenght));
+			m_fin.read(reinterpret_cast<char*>(&data_lenght), sizeof(data_lenght));
 			char* buffer = new char[data_lenght];
 			m_fin.read(buffer, data_lenght);
 
-			data = buffer;
+			*pArr = buffer;
 
 			delete[] buffer;
 		}
+
+
+		m_current_position = m_fin.tellg();
+		m_fin.close();
+	}
+
+	/// <summary>
+	/// Serialize one variable.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="data"></param>
+	/// <param name="path"></param>
+	template<typename T>
+	void SerializeData(const T& data, std::string_view path)
+	{
+		m_fout.open(path.data(), std::ios::binary | std::ios::app | std::ios::out);
+
+		if (!m_fout.is_open())
+		{
+			throw std::exception("error opening the file");
+		}
+		
+		m_fout.write(reinterpret_cast<const char*>(&data), sizeof(T));
+		m_fout.close();
+	}
+	
+	/// <summary>
+	/// Deserialize one variable.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="data"></param>
+	/// <param name="path"></param>
+	template<typename T>
+	void DeserializeData(T& data, std::string_view path)
+	{
+		m_fin.open(path.data(), std::ios::binary | std::ios::in);
+		m_fin.seekg(m_current_position, std::ios_base::beg);
+
+		if (!m_fin.is_open())
+		{
+			throw std::exception("error opening the file");
+		}
+
+		m_fin.read(reinterpret_cast<char*>(&data), sizeof(T));
+		m_current_position = m_fin.tellg();
+		m_fin.close();
+	}
+
+	/// <summary>
+	/// Serialize one variable.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="data"></param>
+	/// <param name="path"></param>
+	template<>
+	void SerializeData<std::string>(const std::string& data, std::string_view path)
+	{
+		m_fout.open(path.data(), std::ios::binary | std::ios::app | std::ios::out);
+
+		if (!m_fout.is_open())
+		{
+			throw std::exception("error opening the file");
+		}
+		
+		std::size_t data_lenght = data.length() + 1;
+
+		m_fout.write(reinterpret_cast<const char*>(&data_lenght), sizeof(data_lenght));
+		m_fout.write(reinterpret_cast<const char*>(data.c_str()), data_lenght);
+
+		m_fout.close();
+	}
+
+	/// <summary>
+	/// Deserialize one variable.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="data"></param>
+	/// <param name="path"></param>
+	template<>
+	void DeserializeData<std::string>(std::string& data, std::string_view path)
+	{
+		m_fin.open(path.data(), std::ios::binary | std::ios::in);
+		m_fin.seekg(m_current_position, std::ios_base::beg);
+
+		if (!m_fin.is_open())
+		{
+			throw std::exception("error opening the file");
+		}
+
+		std::size_t data_lenght;
+
+		m_fin.read(reinterpret_cast<char*>(&data_lenght), sizeof(data_lenght));
+		char* buffer = new char[data_lenght];
+		m_fin.read(buffer, data_lenght);
+
+		data = buffer;
+		delete[] buffer;
 
 		m_current_position = m_fin.tellg();
 		m_fin.close();
@@ -265,13 +250,11 @@ public:
 		{
 			throw std::exception("error opening the file");
 		}
-		else
-		{
-			bool result = m_fin.peek() == std::ifstream::traits_type::eof();
-			m_fin.close();
 
-			return result;
-		}
+		bool result = m_fin.peek() == std::ifstream::traits_type::eof();
+		m_fin.close();
+
+		return result;
 	}
 
 	/// <summary>
@@ -283,10 +266,10 @@ public:
 	/// Clear the file.
 	/// </summary>
 	/// <param name="path"></param>
-	void ClearFile(const std::string path)
+	void ClearFile(std::string_view path)
 	{
 		m_current_position = NULL;
-		m_fout.open(path, std::ios::out | std::ios::trunc);
+		m_fout.open(path.data(), std::ios::out | std::ios::trunc);
 		m_fout.close();
 	}
 
@@ -299,7 +282,7 @@ private:
 
 int main()
 {
-	const std::string PATH = "my_data.bin";
+    std::string_view PATH = "my_data.bin";
 	Serialization serialization;
 	
 	const int SIZE = 3;

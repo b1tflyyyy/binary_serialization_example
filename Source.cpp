@@ -2,6 +2,7 @@
 #include<string>
 #include<string_view>
 #include<fstream>
+#include<memory>
 
 #define STRING_NULL " "
 
@@ -38,12 +39,10 @@ public:
 		{
 			throw std::exception("error opening the file");
 		}
-		
 		for (T* pArr = data; pArr < data + size; pArr++)
 		{
 			m_fout.write(reinterpret_cast<const char*>(pArr), sizeof(T));
 		}
-
 
 		m_fout.close();
 	}
@@ -65,7 +64,6 @@ public:
 		{
 			throw std::exception("error opening the file");
 		}
-
 		for (T* pArr = data; pArr < data + size; pArr++)
 		{
 			m_fin.read(reinterpret_cast<char*>(pArr), sizeof(T));
@@ -91,15 +89,13 @@ public:
 		{
 			throw std::exception("error opening the file");
 		}
-
 		for (std::string* pArr = data; pArr < data + size; pArr++)
 		{
 			std::size_t data_lenght = (*pArr).length() + 1;
-				
+
 			m_fout.write(reinterpret_cast<const char*>(&data_lenght), sizeof(data_lenght));
 			m_fout.write(reinterpret_cast<const char*>((*pArr).c_str()), data_lenght);
 		}
-
 
 		m_fout.close();
 	}
@@ -111,7 +107,7 @@ public:
 	/// <param name="data"></param>
 	/// <param name="size"></param>
 	/// <param name="path"></param>
-	template<> // implementation for strings ----->
+	template<>
 	void DeserializeArrayOfData<std::string>(std::string* data, const int size, std::string_view path)
 	{
 		m_fin.open(path.data(), std::ios::binary | std::ios::in);
@@ -121,20 +117,16 @@ public:
 		{
 			throw std::exception("error opening the file");
 		}
-
 		for (std::string* pArr = data; pArr < data + size; pArr++)
 		{
 			std::size_t data_lenght;
 
 			m_fin.read(reinterpret_cast<char*>(&data_lenght), sizeof(data_lenght));
-			char* buffer = new char[data_lenght];
-			m_fin.read(buffer, data_lenght);
+			auto buffer = std::make_unique<char[]>(data_lenght);
 
-			*pArr = buffer;
-
-			delete[] buffer;
+			m_fin.read(buffer.get(), data_lenght);
+			*pArr = buffer.get();
 		}
-
 
 		m_current_position = m_fin.tellg();
 		m_fin.close();
@@ -226,11 +218,10 @@ public:
 		std::size_t data_lenght;
 
 		m_fin.read(reinterpret_cast<char*>(&data_lenght), sizeof(data_lenght));
-		char* buffer = new char[data_lenght];
-		m_fin.read(buffer, data_lenght);
+		auto buffer = std::make_unique<char[]>(data_lenght);
 
-		data = buffer;
-		delete[] buffer;
+		m_fin.read(buffer.get(), data_lenght);
+		data = buffer.get();
 
 		m_current_position = m_fin.tellg();
 		m_fin.close();
@@ -282,7 +273,7 @@ private:
 
 int main()
 {
-    std::string_view PATH = "my_data.bin";
+	std::string_view PATH = "my_data.bin";
 	Serialization serialization;
 	
 	const int SIZE = 3;
@@ -296,7 +287,7 @@ int main()
 		int nums[SIZE] = { 1, 2, 3 };
 		serialization.SerializeArrayOfData(nums, SIZE, PATH);
 
-		std::string strings[SIZE] = { "sssss", "dsfsdfsdfsd", "fsdfsdfksdriireirioreoireogdfgdfg" };
+		std::string strings[SIZE] = { "bebra", "dsfsdfsdfsd", "fsdfsdfksdriireirioreoireogdfgdfg" };
 		serialization.SerializeArrayOfData(strings, SIZE, PATH);
 
 		float fnums[SIZE] = { 1.2, 3.4, 7.7 };
@@ -310,17 +301,17 @@ int main()
 	}
 	catch (const std::ofstream::failure& ex)
 	{
-		std::cout << ex.what() << std::endl;
-		std::cout << "Error code: " << ex.code() << std::endl;
-		std::cout << "Error opening the file" << std::endl;
+		std::cout << ex.what() << '\n';
+		std::cout << "Error code: " << ex.code() << '\n';
+		std::cout << "Error opening the file" << '\n';
 	}
 	catch (const std::exception& ex)
 	{
-		std::cout << ex.what() << std::endl;
+		std::cout << ex.what() << '\n';
 	}
 	catch (...)
 	{
-		std::cout << "Something went wrong" << std::endl;
+		std::cout << "Something went wrong" << '\n';
 	}
 	
 #endif
@@ -362,17 +353,17 @@ int main()
 	}
 	catch (const std::ifstream::failure& ex)
 	{
-		std::cout << ex.what() << std::endl;
-		std::cout << "Error code: " << ex.code() << std::endl;
-		std::cout << "Error opening the file" << std::endl;
+		std::cout << ex.what() << '\n';
+		std::cout << "Error code: " << ex.code() << '\n';
+		std::cout << "Error opening the file" << '\n';
 	}
 	catch (const std::exception& ex)
 	{
-		std::cout << ex.what() << std::endl;
+		std::cout << ex.what() << '\n';
 	}
 	catch (...)
 	{
-		std::cout << "Something went wrong" << std::endl;
+		std::cout << "Something went wrong" << '\n';
 	}
 #endif
 

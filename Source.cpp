@@ -1,6 +1,6 @@
 #include<iostream>
 #include<string>
-#include "SerializationBin.h"
+#include<SerializationBinary.h>
 
 #define STRING_NULL " "
 #define NEW_LINE '\n'
@@ -11,7 +11,7 @@
 int main()
 {
 	std::string_view PATH = "my_data.bin";
-	szon::SerializationBin serialization;
+	szon::SerializationBinary serialization;
 	
 	const int SIZE = 3;
 

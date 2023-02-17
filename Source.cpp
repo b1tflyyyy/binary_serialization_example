@@ -1,5 +1,6 @@
 #include<iostream>
 #include<string>
+#include<string_view>
 #include<SerializationBinary.h>
 
 #define STRING_NULL " "
@@ -24,7 +25,7 @@ int main()
 		int nums[SIZE] = { 1, 2, 3 };
 		serialization.SerializeArrayOfData(nums, SIZE, PATH);
 
-		std::string strings[SIZE] = { "bebra", "dsfsdfsdfsd", "fsdfsdfksdriireirioreoireogdfgdfg" };
+		std::string strings[SIZE] = { "hello", "world", "c++" };
 		serialization.SerializeArrayOfData(strings, SIZE, PATH);
 
 		float fnums[SIZE] = { 1.2, 3.4, 7.7 };
@@ -72,9 +73,9 @@ int main()
 
 		std::string result_strings[SIZE] = { STRING_NULL };
 		serialization.DeserializeArrayOfData(result_strings, SIZE, PATH);
-		for (int i = 0; i < SIZE; i++)
+		for (std::string_view element : result_strings)
 		{
-			std::cout << result_strings[i] << NEW_LINE;
+			std::cout << element << NEW_LINE;
 		}
 
 		float result_fnums[SIZE] = { NULL };
@@ -102,7 +103,7 @@ int main()
 		{
 			std::cout << result_symbols[i];
 		}
-		std::cout << std::endl;
+		std::cout << NEW_LINE;
 
 		serialization.ResetFileReadPosition();
 	}

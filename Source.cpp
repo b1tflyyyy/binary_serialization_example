@@ -20,7 +20,11 @@ int main()
 
 	try
 	{
+		std::cout << "Is file empty: " << serialization.IsFileEmpty(PATH) << NEW_LINE;
+
 		serialization.ClearFile(PATH);
+
+		std::cout << "Is file empty: " << serialization.IsFileEmpty(PATH) << NEW_LINE;
 
 		int nums[SIZE] = { 1, 2, 3 };
 		serialization.SerializeArrayOfData(nums, SIZE, PATH);

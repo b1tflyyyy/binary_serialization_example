@@ -46,6 +46,9 @@ int main()
 
 		char symbols[SIZE] = { 'm', 'g', '\0' };
 		serialization.SerializeArrayOfData(symbols, SIZE, PATH);
+
+		std::wstring wstr[SIZE] = { L"hi", L"hello", L"u" };
+		serialization.SerializeArrayOfData<std::wstring>(wstr, SIZE, PATH);
 	}
 	catch (const std::ofstream::failure& ex)
 	{
@@ -106,6 +109,14 @@ int main()
 		for (int i = 0; i < SIZE; i++)
 		{
 			std::cout << result_symbols[i];
+		}
+		std::cout << NEW_LINE;
+
+		std::wstring results_wstr[SIZE] =  { L" " };
+		serialization.DeserializeArrayOfData<std::wstring>(results_wstr, SIZE, PATH);
+		for (int i = 0; i < SIZE; i++)
+		{
+			std::wcout << results_wstr[i] << NEW_LINE;
 		}
 		std::cout << NEW_LINE;
 

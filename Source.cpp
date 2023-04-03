@@ -49,6 +49,12 @@ int main()
 
 		std::wstring wstr[SIZE] = { L"hi", L"hello", L"u" };
 		serialization.SerializeArrayOfData<std::wstring>(wstr, SIZE, PATH);
+
+		std::wstring single_str = L"dsadssss";
+		serialization.SerializeData<std::wstring>(single_str, PATH);
+
+		wchar_t wsymbol = L'f';
+		serialization.SerializeData<wchar_t>(wsymbol, PATH);
 	}
 	catch (const std::ofstream::failure& ex)
 	{
@@ -118,6 +124,15 @@ int main()
 		{
 			std::wcout << results_wstr[i] << NEW_LINE;
 		}
+
+		std::wstring result_single_str{ L" " };
+		serialization.DeserializeData<std::wstring>(result_single_str, PATH);
+		std::wcout << result_single_str << '\n';
+
+		wchar_t result_wsymbol = L' ';
+		serialization.DeserializeData<wchar_t>(result_wsymbol, PATH);
+		std::wcout << result_wsymbol << '\n';
+
 		std::cout << NEW_LINE;
 
 		serialization.ResetFileReadPosition();
